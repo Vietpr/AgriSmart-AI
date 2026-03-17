@@ -1,0 +1,13 @@
+services:
+  agrismart-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrismart-ai
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    volumes:
+      - ./mlruns:/app/mlruns
+    restart: unless-stopped

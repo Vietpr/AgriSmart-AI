@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriSmart AI - Hệ thống Hỗ trợ Quyết định Nông nghiệp</title>
+    <meta name="description" content="Hệ thống hỗ trợ quyết định nông nghiệp thông minh kết hợp dự đoán XGBoost, giải thích SHAP và suy luận LLM">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <div class="logo">🌾</div>
+                <div>
+                    <h1 class="header-title">AgriSmart AI</h1>
+                    <p class="header-subtitle">Hệ thống Hỗ trợ Quyết định Nông nghiệp bằng AI</p>
+                </div>
+            </div>
+            <div class="header-tech">
+                <span class="tech-badge">XGBoost</span>
+                <span class="tech-badge">SHAP</span>
+                <span class="tech-badge">Gemini</span>
+                <span class="tech-badge">MLflow</span>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="predict" id="tab-predict">
+                <span class="tab-icon">🌡️</span>
+                <span>Dự đoán & Tư vấn</span>
+            </button>
+            <button class="tab" data-tab="explain" id="tab-explain">
+                <span class="tab-icon">🔍</span>
+                <span>Giải thích</span>
+            </button>
+            <button class="tab" data-tab="scenario" id="tab-scenario">
+                <span class="tab-icon">🔄</span>
+                <span>Mô phỏng Kịch bản</span>
+            </button>
+        </nav>
+
+        <!-- Predict Tab -->
+        <div class="tab-content active" id="content-predict">
+            <div class="panel-grid">
+                <!-- Input Panel -->
+                <div class="panel input-panel">
+                    <div class="panel-header">
+                        <h2>Dữ liệu Thời tiết</h2>
+                        <p>Nhập điều kiện thời tiết để dự đoán</p>
+                    </div>
+                    <form id="predict-form" class="form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Độ ẩm (%)</label>
+                                <input type="number" name="humidity" value="75" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Lượng mưa (mm)</label>
+                                <input type="number" name="precip" value="5.0" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối đa hiện tại (°C)</label>
+                                <input type="number" name="tempmax" value="32" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối thiểu hiện tại (°C)</label>
+                                <input type="number" name="tempmin" value="24" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hướng gió (°)</label>
+                                <input type="number" name="winddir" value="180" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tốc độ gió (km/h)</label>
+                                <input type="number" name="windspeed" value="15" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Độ phủ mưa (%)</label>
+                                <input type="number" name="precipcover" value="30" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Năng lượng mặt trời (MJ/m²)</label>
+                                <input type="number" name="solarenergy" value="18" step="0.1" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" id="predict-btn">
+                            <span class="btn-text">🚀 Dự đoán & Phân tích</span>
+                            <span class="btn-loading" style="display:none;">⏳ Đang phân tích...</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Result Panel -->
+                <div class="panel result-panel">
+                    <div class="panel-header">
+                        <h2>Tư vấn AI</h2>
+                        <p>Khuyến nghị nông nghiệp từ LLM</p>
+                    </div>
+
+                    <div id="predict-result" class="result-container">
+                        <div class="result-placeholder">
+                            <div class="placeholder-icon">🌱</div>
+                            <p>Nhập điều kiện thời tiết và nhấn "Dự đoán & Phân tích" để nhận tư vấn nông nghiệp từ AI</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explain Tab -->
+        <div class="tab-content" id="content-explain">
+            <div class="panel-grid">
+                <div class="panel input-panel">
+                    <div class="panel-header">
+                        <h2>Dữ liệu Giải thích</h2>
+                        <p>Nhập điều kiện để hiểu lý do mô hình dự đoán</p>
+                    </div>
+                    <form id="explain-form" class="form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Độ ẩm (%)</label>
+                                <input type="number" name="humidity" value="85" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Lượng mưa (mm)</label>
+                                <input type="number" name="precip" value="10" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối đa hiện tại (°C)</label>
+                                <input type="number" name="tempmax" value="35" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối thiểu hiện tại (°C)</label>
+                                <input type="number" name="tempmin" value="26" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hướng gió (°)</label>
+                                <input type="number" name="winddir" value="200" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tốc độ gió (km/h)</label>
+                                <input type="number" name="windspeed" value="10" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Độ phủ mưa (%)</label>
+                                <input type="number" name="precipcover" value="50" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Năng lượng mặt trời (MJ/m²)</label>
+                                <input type="number" name="solarenergy" value="20" step="0.1" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" id="explain-btn">
+                            <span class="btn-text">🔍 Giải thích Dự đoán</span>
+                            <span class="btn-loading" style="display:none;">⏳ Đang tính SHAP...</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="panel result-panel">
+                    <div class="panel-header">
+                        <h2>Phân tích SHAP + Giải thích LLM</h2>
+                        <p>Hiểu tại sao mô hình đưa ra dự đoán nhiệt độ này</p>
+                    </div>
+                    <div id="explain-result" class="result-container">
+                        <div class="result-placeholder">
+                            <div class="placeholder-icon">🧠</div>
+                            <p>Nhập điều kiện và nhấn "Giải thích Dự đoán" để xem phân tích đóng góp SHAP cùng diễn giải từ LLM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenario Tab -->
+        <div class="tab-content" id="content-scenario">
+            <div class="scenario-grid">
+                <div class="panel scenario-panel">
+                    <div class="panel-header">
+                        <h2>Kịch bản A (Hiện tại)</h2>
+                        <p>Điều kiện thời tiết hiện tại</p>
+                    </div>
+                    <form class="form" id="scenario-form-a">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Độ ẩm (%)</label>
+                                <input type="number" name="humidity" value="80" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Lượng mưa (mm)</label>
+                                <input type="number" name="precip" value="8" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối đa (°C)</label>
+                                <input type="number" name="tempmax" value="34" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối thiểu (°C)</label>
+                                <input type="number" name="tempmin" value="25" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hướng gió (°)</label>
+                                <input type="number" name="winddir" value="180" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tốc độ gió (km/h)</label>
+                                <input type="number" name="windspeed" value="12" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Độ phủ mưa (%)</label>
+                                <input type="number" name="precipcover" value="40" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Năng lượng mặt trời (MJ/m²)</label>
+                                <input type="number" name="solarenergy" value="19" step="0.1" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel scenario-panel">
+                    <div class="panel-header">
+                        <h2>Kịch bản B (Giả định)</h2>
+                        <p>Điều kiện thời tiết thay đổi để so sánh</p>
+                    </div>
+                    <form class="form" id="scenario-form-b">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Độ ẩm (%)</label>
+                                <input type="number" name="humidity" value="60" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Lượng mưa (mm)</label>
+                                <input type="number" name="precip" value="2" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối đa (°C)</label>
+                                <input type="number" name="tempmax" value="34" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhiệt độ tối thiểu (°C)</label>
+                                <input type="number" name="tempmin" value="25" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hướng gió (°)</label>
+                                <input type="number" name="winddir" value="180" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tốc độ gió (km/h)</label>
+                                <input type="number" name="windspeed" value="20" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Độ phủ mưa (%)</label>
+                                <input type="number" name="precipcover" value="10" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Năng lượng mặt trời (MJ/m²)</label>
+                                <input type="number" name="solarenergy" value="25" step="0.1" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="scenario-action">
+                <button class="btn-primary btn-wide" id="scenario-btn">
+                    <span class="btn-text">🔄 So sánh Kịch bản</span>
+                    <span class="btn-loading" style="display:none;">⏳ Đang phân tích...</span>
+                </button>
+            </div>
+
+            <div class="panel" id="scenario-result-panel" style="display:none;">
+                <div class="panel-header">
+                    <h2>Kết quả So sánh Kịch bản</h2>
+                    <p>Phân tích AI cho cả hai kịch bản</p>
+                </div>
+                <div id="scenario-result" class="result-container"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>AgriSmart AI — Hệ thống AI Lai: Dự đoán ML + Giải thích SHAP + Suy luận LLM + Theo dõi MLflow</p>
+        </footer>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>
