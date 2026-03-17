@@ -1,7 +1,3 @@
-"""
-Predict Route - POST /api/predict (structured) + GET /api/predict/stream (SSE)
-"""
-
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel

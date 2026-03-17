@@ -1,11 +1,3 @@
-"""
-AgriSmart AI - FastAPI Application
-
-AI-Powered Agricultural Decision Support System
-Combining XGBoost prediction, SHAP explainability, LLM reasoning,
-scenario simulation, and MLflow experiment tracking.
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

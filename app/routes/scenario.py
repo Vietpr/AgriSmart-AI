@@ -1,7 +1,3 @@
-"""
-Scenario Route - POST /api/scenario (What-If simulation)
-"""
-
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel

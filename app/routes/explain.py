@@ -1,7 +1,3 @@
-"""
-Explain Route - POST /api/explain (SHAP + LLM)
-"""
-
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
