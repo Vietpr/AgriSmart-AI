@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriSmart AI - Hệ thống Hỗ trợ Quyết định Nông nghiệp</title>
-    <meta name="description" content="Hệ thống hỗ trợ quyết định nông nghiệp thông minh kết hợp dự đoán XGBoost, giải thích SHAP và suy luận LLM">
+    <meta name="description"
+        content="Hệ thống hỗ trợ quyết định nông nghiệp thông minh kết hợp dự đoán XGBoost, giải thích SHAP và suy luận LLM">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
     <div class="app">
         <!-- Header -->
@@ -22,6 +26,34 @@
                 </div>
             </div>
         </header>
+
+        <!-- Global Location Panel -->
+        <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-header" style="margin-bottom: 0;">
+                <h2>🌍 Dữ liệu Thời tiết Tự động</h2>
+                <p>Lấy dữ liệu thực tế tại vị trí của bạn để áp dụng tự động cho mọi tính năng bên dưới</p>
+
+                <div
+                    style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; background: rgba(59,130,246, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(59,130,246, 0.2);">
+                    <button type="button" id="btn-get-gps" class="btn-secondary"
+                        style="flex: 1; margin:0; padding:10px; font-size:14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="btn-text">📍 Vị trí hiện tại (GPS)</span>
+                        <span class="btn-loading" style="display:none;">⏳</span>
+                    </button>
+                    <div style="display: flex; flex: 2; gap: 5px;">
+                        <input type="text" id="city-input" placeholder="Hoặc nhập Tỉnh/Thành phố..."
+                            style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: Inter, sans-serif; font-size: 14px;">
+                        <button type="button" id="btn-search-city" class="btn-primary"
+                            style="margin:0; padding:10px 15px; font-size:14px; min-width: max-content; display: flex; align-items: center; gap: 5px;">
+                            <span class="btn-text">🔍 Tìm kiếm</span>
+                            <span class="btn-loading" style="display:none;">⏳</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="location-status"
+                    style="margin-top: 10px; font-size: 0.9rem; color: #10b981; font-weight: 500; display: none;"></div>
+            </div>
+        </div>
 
         <!-- Tab Navigation -->
         <nav class="tabs">
@@ -52,35 +84,35 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Độ ẩm (%)</label>
-                                <input type="number" name="humidity" value="75" step="0.1" required>
+                                <input type="number" name="humidity" value="75" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Lượng mưa (mm)</label>
-                                <input type="number" name="precip" value="5.0" step="0.1" required>
+                                <input type="number" name="precip" value="5.0" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối đa hiện tại (°C)</label>
-                                <input type="number" name="tempmax" value="32" step="0.1" required>
+                                <input type="number" name="tempmax" value="32" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối thiểu hiện tại (°C)</label>
-                                <input type="number" name="tempmin" value="24" step="0.1" required>
+                                <input type="number" name="tempmin" value="24" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Hướng gió (°)</label>
-                                <input type="number" name="winddir" value="180" step="0.1" required>
+                                <input type="number" name="winddir" value="180" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Tốc độ gió (km/h)</label>
-                                <input type="number" name="windspeed" value="15" step="0.1" required>
+                                <input type="number" name="windspeed" value="15" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Độ phủ mưa (%)</label>
-                                <input type="number" name="precipcover" value="30" step="0.1" required>
+                                <input type="number" name="precipcover" value="30" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Năng lượng mặt trời (MJ/m²)</label>
-                                <input type="number" name="solarenergy" value="18" step="0.1" required>
+                                <input type="number" name="solarenergy" value="18" step="any" required>
                             </div>
                         </div>
                         <button type="submit" class="btn-primary" id="predict-btn">
@@ -94,13 +126,14 @@
                 <div class="panel result-panel">
                     <div class="panel-header">
                         <h2>Tư vấn AI</h2>
-                        <p>Khuyến nghị nông nghiệp từ LLM</p>
+                        <p>Khuyến nghị nông nghiệp từ AgriSmart AI</p>
                     </div>
 
                     <div id="predict-result" class="result-container">
                         <div class="result-placeholder">
                             <div class="placeholder-icon">🌱</div>
-                            <p>Nhập điều kiện thời tiết và nhấn "Dự đoán & Phân tích" để nhận tư vấn nông nghiệp từ AI</p>
+                            <p>Nhập điều kiện thời tiết và nhấn "Dự đoán & Phân tích" để nhận tư vấn nông nghiệp từ AI
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -119,35 +152,35 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Độ ẩm (%)</label>
-                                <input type="number" name="humidity" value="85" step="0.1" required>
+                                <input type="number" name="humidity" value="85" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Lượng mưa (mm)</label>
-                                <input type="number" name="precip" value="10" step="0.1" required>
+                                <input type="number" name="precip" value="10" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối đa hiện tại (°C)</label>
-                                <input type="number" name="tempmax" value="35" step="0.1" required>
+                                <input type="number" name="tempmax" value="35" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối thiểu hiện tại (°C)</label>
-                                <input type="number" name="tempmin" value="26" step="0.1" required>
+                                <input type="number" name="tempmin" value="26" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Hướng gió (°)</label>
-                                <input type="number" name="winddir" value="200" step="0.1" required>
+                                <input type="number" name="winddir" value="200" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Tốc độ gió (km/h)</label>
-                                <input type="number" name="windspeed" value="10" step="0.1" required>
+                                <input type="number" name="windspeed" value="10" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Độ phủ mưa (%)</label>
-                                <input type="number" name="precipcover" value="50" step="0.1" required>
+                                <input type="number" name="precipcover" value="50" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Năng lượng mặt trời (MJ/m²)</label>
-                                <input type="number" name="solarenergy" value="20" step="0.1" required>
+                                <input type="number" name="solarenergy" value="20" step="any" required>
                             </div>
                         </div>
                         <button type="submit" class="btn-primary" id="explain-btn">
@@ -165,7 +198,8 @@
                     <div id="explain-result" class="result-container">
                         <div class="result-placeholder">
                             <div class="placeholder-icon">🧠</div>
-                            <p>Nhập điều kiện và nhấn "Giải thích Dự đoán" để xem phân tích đóng góp SHAP cùng diễn giải từ LLM</p>
+                            <p>Nhập điều kiện và nhấn "Giải thích Dự đoán" để xem phân tích đóng góp SHAP cùng diễn giải
+                                từ LLM</p>
                         </div>
                     </div>
                 </div>
@@ -184,35 +218,35 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Độ ẩm (%)</label>
-                                <input type="number" name="humidity" value="80" step="0.1" required>
+                                <input type="number" name="humidity" value="80" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Lượng mưa (mm)</label>
-                                <input type="number" name="precip" value="8" step="0.1" required>
+                                <input type="number" name="precip" value="8" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối đa (°C)</label>
-                                <input type="number" name="tempmax" value="34" step="0.1" required>
+                                <input type="number" name="tempmax" value="34" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối thiểu (°C)</label>
-                                <input type="number" name="tempmin" value="25" step="0.1" required>
+                                <input type="number" name="tempmin" value="25" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Hướng gió (°)</label>
-                                <input type="number" name="winddir" value="180" step="0.1" required>
+                                <input type="number" name="winddir" value="180" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Tốc độ gió (km/h)</label>
-                                <input type="number" name="windspeed" value="12" step="0.1" required>
+                                <input type="number" name="windspeed" value="12" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Độ phủ mưa (%)</label>
-                                <input type="number" name="precipcover" value="40" step="0.1" required>
+                                <input type="number" name="precipcover" value="40" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Năng lượng mặt trời (MJ/m²)</label>
-                                <input type="number" name="solarenergy" value="19" step="0.1" required>
+                                <input type="number" name="solarenergy" value="19" step="any" required>
                             </div>
                         </div>
                     </form>
@@ -227,35 +261,35 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Độ ẩm (%)</label>
-                                <input type="number" name="humidity" value="60" step="0.1" required>
+                                <input type="number" name="humidity" value="60" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Lượng mưa (mm)</label>
-                                <input type="number" name="precip" value="2" step="0.1" required>
+                                <input type="number" name="precip" value="2" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối đa (°C)</label>
-                                <input type="number" name="tempmax" value="34" step="0.1" required>
+                                <input type="number" name="tempmax" value="34" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Nhiệt độ tối thiểu (°C)</label>
-                                <input type="number" name="tempmin" value="25" step="0.1" required>
+                                <input type="number" name="tempmin" value="25" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Hướng gió (°)</label>
-                                <input type="number" name="winddir" value="180" step="0.1" required>
+                                <input type="number" name="winddir" value="180" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Tốc độ gió (km/h)</label>
-                                <input type="number" name="windspeed" value="20" step="0.1" required>
+                                <input type="number" name="windspeed" value="20" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Độ phủ mưa (%)</label>
-                                <input type="number" name="precipcover" value="10" step="0.1" required>
+                                <input type="number" name="precipcover" value="10" step="any" required>
                             </div>
                             <div class="form-group">
                                 <label>Năng lượng mặt trời (MJ/m²)</label>
-                                <input type="number" name="solarenergy" value="25" step="0.1" required>
+                                <input type="number" name="solarenergy" value="25" step="any" required>
                             </div>
                         </div>
                     </form>
@@ -286,4 +320,5 @@
 
     <script src="index.js"></script>
 </body>
+
 </html>

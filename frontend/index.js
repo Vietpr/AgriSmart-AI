@@ -128,6 +128,86 @@ function renderShapChart(contributions, title) {
 }
 
 
+// ---- Weather Auto-Fill Logic ----
+async function fetchAndPopulateWeather(lat, lon, locationName) {
+    const statusEl = document.getElementById('location-status');
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#3b82f6';
+    statusEl.textContent = `Đang tải thời tiết cho ${locationName}...`;
+
+    try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,shortwave_radiation_sum,precipitation_probability_max&timezone=auto`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Không thể tải dữ liệu thời tiết');
+
+        const data = await res.json();
+
+        const forms = ['predict-form', 'explain-form', 'scenario-form-a', 'scenario-form-b'];
+        forms.forEach(formId => {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.querySelector('[name="humidity"]').value = data.current.relative_humidity_2m;
+                form.querySelector('[name="precip"]').value = data.daily.precipitation_sum[0] || 0;
+                form.querySelector('[name="tempmax"]').value = data.daily.temperature_2m_max[0];
+                form.querySelector('[name="tempmin"]').value = data.daily.temperature_2m_min[0];
+                form.querySelector('[name="winddir"]').value = data.daily.wind_direction_10m_dominant[0];
+                form.querySelector('[name="windspeed"]').value = data.daily.wind_speed_10m_max[0];
+                form.querySelector('[name="precipcover"]').value = data.daily.precipitation_probability_max[0] || 0;
+                form.querySelector('[name="solarenergy"]').value = data.daily.shortwave_radiation_sum[0] || 0;
+            }
+        });
+
+        statusEl.style.color = '#10b981';
+        statusEl.textContent = `✅ Lấy dữ liệu thành công: ${locationName} (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+    } catch (err) {
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = `❌ Lỗi: ${err.message}`;
+    }
+}
+
+document.getElementById('btn-get-gps').addEventListener('click', async () => {
+    setLoading('btn-get-gps', true);
+    try {
+        const pos = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 }));
+        await fetchAndPopulateWeather(pos.coords.latitude, pos.coords.longitude, 'Vị trí của bạn');
+    } catch (err) {
+        const statusEl = document.getElementById('location-status');
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = err.code === 1 ? '❌ Vui lòng cấp quyền truy cập vị trí.' : `❌ Lỗi GPS: ${err.message}`;
+    } finally {
+        setLoading('btn-get-gps', false);
+    }
+});
+
+document.getElementById('btn-search-city').addEventListener('click', async () => {
+    const city = document.getElementById('city-input').value.trim();
+    if (!city) return;
+
+    setLoading('btn-search-city', true);
+    const statusEl = document.getElementById('location-status');
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#3b82f6';
+    statusEl.textContent = `Đang tìm tọa độ cho "${city}"...`;
+
+    try {
+        const geocodeRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=vi`);
+        const geocodeData = await geocodeRes.json();
+
+        if (!geocodeData.results || geocodeData.results.length === 0) {
+            throw new Error('Không tìm thấy địa điểm này');
+        }
+
+        const loc = geocodeData.results[0];
+        await fetchAndPopulateWeather(loc.latitude, loc.longitude, `${loc.name}, ${loc.country || ''}`);
+    } catch (err) {
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = `❌ ${err.message}`;
+    } finally {
+        setLoading('btn-search-city', false);
+    }
+});
+
 // ---- Predict Tab ----
 document.getElementById('predict-form').addEventListener('submit', async (e) => {
     e.preventDefault();
