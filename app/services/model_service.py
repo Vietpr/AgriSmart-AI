@@ -1,7 +1,3 @@
-"""
-Model Service - Load XGBoost models and make predictions.
-"""
-
 import joblib
 import numpy as np
 import pandas as pd

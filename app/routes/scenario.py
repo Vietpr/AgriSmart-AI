@@ -2,7 +2,6 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
-
 from app.services.scenario_service import scenario_service
 
 router = APIRouter()

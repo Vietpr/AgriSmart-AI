@@ -1,16 +1,5 @@
-"""
-Scenario Service - What-If Simulation.
-
-GenAI Technique: Scenario Simulation
-- Compare two weather scenarios
-- Run prediction + SHAP for both
-- LLM analyzes the differences
-"""
-
 import json
-
 import google.generativeai as genai
-
 from app.config import settings
 from app.prompts.scenario import SCENARIO_SYSTEM_PROMPT
 from app.services.model_service import model_service
@@ -78,21 +67,26 @@ class ScenarioService:
 
         response = self.llm_model.generate_content(prompt, stream=True)
         for chunk in response:
-            if chunk.text:
-                yield json.dumps({"type": "text", "data": chunk.text})
+            try:
+                if chunk.text:
+                    yield json.dumps({"type": "text", "data": chunk.text})
+            except ValueError:
+                pass
 
     def _build_comparison_prompt(self, sc_a, pred_a, sc_b, pred_b):
         def format_scenario(sc, pred, label):
             return f"""
 **{label}:**
-- Humidity: {sc.get('humidity', 'N/A')}%
-- Precipitation: {sc.get('precip', 'N/A')} mm
-- Wind Direction: {sc.get('winddir', 'N/A')}°
-- Wind Speed: {sc.get('windspeed', 'N/A')} km/h
-- Precipitation Coverage: {sc.get('precipcover', 'N/A')}%
-- Solar Energy: {sc.get('solarenergy', 'N/A')} MJ/m²
-- Predicted TempMax: {pred.get('tempmax', 'N/A')}°C
-- Predicted TempMin: {pred.get('tempmin', 'N/A')}°C"""
+- Current Humidity (Today): {sc.get('humidity', 'N/A')}%
+- Current Precipitation (Today): {sc.get('precip', 'N/A')} mm
+- Current Max Temp (Today): {sc.get('tempmax', 'N/A')}°C
+- Current Min Temp (Today): {sc.get('tempmin', 'N/A')}°C
+- Current Wind Direction (Today): {sc.get('winddir', 'N/A')}°
+- Current Wind Speed (Today): {sc.get('windspeed', 'N/A')} km/h
+- Current Precip Coverage (Today): {sc.get('precipcover', 'N/A')}%
+- Current Solar Energy (Today): {sc.get('solarenergy', 'N/A')} MJ/m²
+- TOMORROW'S Predicted TempMax: {pred.get('tempmax', 'N/A')}°C
+- TOMORROW'S Predicted TempMin: {pred.get('tempmin', 'N/A')}°C"""
 
         changes = []
         for key in sc_a:
@@ -102,24 +96,24 @@ class ScenarioService:
                 )
 
         return f"""
-Compare these two agricultural weather scenarios and analyze the impact:
+Compare these two agricultural weather scenarios and analyze the impact of current conditions on tomorrow's temperatures:
 
-{format_scenario(sc_a, pred_a, "Scenario A (Current/Baseline)")}
+{format_scenario(sc_a, pred_a, "Scenario A (Baseline)")}
 
-{format_scenario(sc_b, pred_b, "Scenario B (Modified/What-If)")}
+{format_scenario(sc_b, pred_b, "Scenario B (Modified Today)")}
 
-**Key Changes from A to B:**
+**Key Changes in Today's Weather from A to B:**
 {chr(10).join(changes) if changes else "No changes detected"}
 
-**Temperature Impact:**
+**Impact on TOMORROW'S Temperature:**
 - TempMax change: {pred_b['tempmax'] - pred_a['tempmax']:+.2f}°C
 - TempMin change: {pred_b['tempmin'] - pred_a['tempmin']:+.2f}°C
 
 Analyze:
-1. Why did these input changes cause these temperature shifts?
-2. What are the agricultural implications of these changes?
-3. Which scenario is better for farming, and why?
-4. What specific actions should farmers take for each scenario?
+1. Why did these changes in today's weather cause these future temperature shifts?
+2. What are the overall agricultural implications of these scenarios looking towards tomorrow?
+3. Which scenario leads to a more favorable condition for farming tomorrow, and why?
+4. What specific actions should farmers take today in response to each scenario to prepare for tomorrow?
 """
 
 

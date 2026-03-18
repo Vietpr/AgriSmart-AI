@@ -2,7 +2,6 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
-
 from app.services.model_service import model_service
 from app.services.llm_service import llm_service
 

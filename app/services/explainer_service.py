@@ -1,20 +1,9 @@
-"""
-Explainer Service - SHAP + LLM for Explainable AI.
-
-GenAI Technique: Explainable AI
-- Compute SHAP feature importance for a prediction
-- Feed SHAP values to Gemini for natural language explanation
-"""
-
 import json
-
 import joblib
 import numpy as np
 import pandas as pd
 import shap
-
 import google.generativeai as genai
-
 from app.config import settings
 from app.prompts.explainer import EXPLAINER_SYSTEM_PROMPT
 from app.services.model_service import model_service
@@ -119,8 +108,11 @@ class ExplainerService:
 
         response = self.llm_model.generate_content(prompt, stream=True)
         for chunk in response:
-            if chunk.text:
-                yield json.dumps({"type": "text", "data": chunk.text})
+            try:
+                if chunk.text:
+                    yield json.dumps({"type": "text", "data": chunk.text})
+            except ValueError:
+                pass
 
     def _build_explanation_prompt(
         self, features, prediction, tempmax_contributions, tempmin_contributions
@@ -135,26 +127,28 @@ class ExplainerService:
         return f"""
 Giải thích dự đoán nhiệt độ sau đây dựa trên đóng góp SHAP của từng đặc trưng:
 
-**Điều kiện thời tiết đầu vào:**
+**Điều kiện thời tiết HIỆN TẠI (Đầu vào - Hôm nay):**
 - Độ ẩm: {features.get('humidity', 'N/A')}%
 - Lượng mưa: {features.get('precip', 'N/A')} mm
+- Nhiệt độ cực đại hôm nay: {features.get('tempmax', 'N/A')}°C
+- Nhiệt độ cực tiểu hôm nay: {features.get('tempmin', 'N/A')}°C
 - Hướng gió: {features.get('winddir', 'N/A')}°
 - Tốc độ gió: {features.get('windspeed', 'N/A')} km/h
 - Độ phủ mưa: {features.get('precipcover', 'N/A')}%
 - Năng lượng mặt trời: {features.get('solarenergy', 'N/A')} MJ/m²
 
-**Nhiệt độ dự đoán:**
-- Tối đa: {prediction.get('tempmax', 'N/A')}°C
-- Tối thiểu: {prediction.get('tempmin', 'N/A')}°C
+**Nhiệt độ dự đoán (Cho NGÀY MAI):**
+- Tối đa ngày mai: {prediction.get('tempmax', 'N/A')}°C
+- Tối thiểu ngày mai: {prediction.get('tempmin', 'N/A')}°C
 
-**Đóng góp SHAP cho TempMax (sắp xếp theo mức độ quan trọng):**
+**Đóng góp SHAP cho TempMax của ngày mai (sắp xếp theo mức độ quan trọng):**
 {chr(10).join(f'- {f}: {v:+.6f}' for f, v in sorted_tempmax)}
 
-**Đóng góp SHAP cho TempMin (sắp xếp theo mức độ quan trọng):**
+**Đóng góp SHAP cho TempMin của ngày mai (sắp xếp theo mức độ quan trọng):**
 {chr(10).join(f'- {f}: {v:+.6f}' for f, v in sorted_tempmin)}
 
-Hãy giải thích rõ ràng bằng ngôn ngữ tự nhiên TẠI SAO mô hình đưa ra các dự đoán này.
-Tập trung vào đặc trưng nào có tác động lớn nhất và theo hướng nào.
+Hãy giải thích rõ ràng bằng ngôn ngữ tự nhiên TẠI SAO mô hình đưa ra các dự đoán nhiệt độ ngày mai từ dữ liệu đầu vào của ngày hôm nay.
+Tập trung vào đặc trưng nào của ngày hôm nay có tác động lớn nhất và theo hướng nào.
 Giải thích trong bối cảnh nông nghiệp mà nông dân có thể hiểu được.
 Trả lời bằng tiếng Việt.
 """
